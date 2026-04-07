@@ -28,9 +28,9 @@ The project implements a total of 9 algorithms, divided into two main categories
 These algorithms explore the map without prior knowledge of the goal's location:
 - [x] **BFS (Breadth-First Search)**: Guaranteed shortest path in unweighted grids.
 - [x] **DFS (Depth-First Search)**: Deep exploration before backtracking.
-- [ ] **DLS (Depth-Limited Search)**: DFS with a maximum depth constraint.
-- [ ] **IDS (Iterative Deepening Search)**: Combines BFS completeness with DFS memory efficiency.
-- [ ] **Bidirectional Search**: Simultaneous search from start and goal.
+- [x] **DLS (Depth-Limited Search)**: DFS with a maximum depth constraint.
+- [x] **IDS (Iterative Deepening Search)**: Combines BFS completeness with DFS memory efficiency.
+- [x] **Bidirectional Search**: Simultaneous search from start and goal.
 
 ### 2. Informed Search (Weighted/Heuristic)
 These algorithms use heuristics to guide the search towards the goal more efficiently:
@@ -63,3 +63,69 @@ netuno/
 │   └── main.cpp          # Application entry point
 ├── CMakeLists.txt        # Build configuration
 └── README.md             # Project documentation
+```
+
+---
+
+## ⚙️ How to Run
+
+With the project already installed in your Linux system, follow the steps below to build and run **netuno_pathfinding**:
+
+### 1. Prerequisites
+Ensure you have the build tools and the **SFML** library installed. On Ubuntu/Debian, run:
+```bash
+sudo apt update
+sudo apt install build-essential cmake libsfml-dev
+```
+
+### 2. Building the Project
+It is recommended to perform an "out-of-source" build to keep the project structure clean. From the project root, run:
+
+```bash
+# Create and enter the build directory
+mkdir -p build && cd build
+
+# Configure the project
+cmake ..
+
+# Compile the executable
+cmake --build .
+```
+
+### 3. Running the Application
+Once the build is complete, you can launch the executable directly from the build folder:
+```bash
+./netuno_pathfinding
+```
+
+### 4. Cleaning and Rerunning
+If you make structural changes to the CMakeLists.txt or need to reset the build environment entirely, use this command to clear the cache and recompile from scratch:
+```bash
+# Remove the build directory and start over
+rm -rf build && mkdir build && cd build
+
+# Reconfigure and Rebuild
+cmake ..
+cmake --build .
+
+# Run again
+./netuno_pathfinding
+```
+
+Make sure you are outside the build directory to run those commands. 
+
+If you are already inside the build directory and just want to clear the compiled files without deleting the folder, run:
+```bash
+make clean
+```
+
+To wipe everything and reconfigure without leaving the build folder:
+```bash
+rm -rf * && cmake .. && cmake --build .
+```
+
+
+> **Note:** If you only modified your source code (`.cpp` or `.hpp` files), you don't need to clear the directory. Simply run `cmake --build .` inside the `build` folder to recompile only the changes.
+
+
+

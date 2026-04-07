@@ -1,10 +1,13 @@
 #include "core/Graph.hpp"
 #include "algorithms/BFS.hpp"
 #include "algorithms/DFS.hpp"
+#include "algorithms/DLS.hpp"
+#include "algorithms/IDS.hpp"
+#include "algorithms/BDS.hpp"
 #include <iostream>
 
 int main() {
-    int size, prob;
+    int size, prob, limit = 0, max_limit = 0;
     std::cout << "Digite o tamanho do grid: ";
     std::cin >> size;
     std::cout << "Digite a probabilidade de paredes: ";
@@ -34,7 +37,13 @@ int main() {
     while(true){
         int opt = 0;
 
-        std::cout << "Escolha um algoritmo: " << "\n\n" << "1. Amplitude" << "\n" << "2. Profundidade" << "\n" << "9. Sair" << "\n\n";
+        std::cout << "Escolha um algoritmo: " << "\n\n" ;
+        std::cout << "1. Amplitude" << "\n"; 
+        std::cout << "2. Profundidade" << "\n";
+        std::cout << "3. Profundidade Limitada" << "\n";
+        std::cout << "4. Aprofundamento Iterativo" << "\n";
+        std::cout << "5. Busca Bidirecional" << "\n";
+        std::cout << "9. Sair" << "\n\n";
 
         std::cin >> opt;
 
@@ -52,6 +61,21 @@ int main() {
                 break;
             case 2:
                 result = DFS::findPathGrid(myMap, sx, sy, ex, ey);
+                break;
+            case 3:
+                std::cout << "Insira o limite desejado: ";
+                std::cin >> limit;
+
+                result = DLS::findPathGrid(myMap, sx, sy, ex, ey, limit);
+                break;
+            case 4:
+                std::cout << "Insira o limite maximo: ";
+                std::cin >> max_limit;
+
+                result = IDS::findPathGrid(myMap, sx, sy, ex, ey, max_limit);
+                break;
+            case 5:
+                result = BDS::findPathGrid(myMap, sx, sy, ex, ey);
                 break;
         }
 

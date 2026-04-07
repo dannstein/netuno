@@ -1,5 +1,5 @@
  cmake_minimum_required(VERSION 3.10)
-project(AI_Pathfinding_Project)
+project(netuno_pathfinding)
 
 # Definir o padrão do C++ (C++17 ou 20 é recomendado para algoritmos)
 set(CMAKE_CXX_STANDARD 17)

@@ -1,3 +1,0 @@
-/home/aluno/Área de trabalho/netuno/build/CMakeFiles/AI_Pathfinding_Project.dir
-/home/aluno/Área de trabalho/netuno/build/CMakeFiles/edit_cache.dir
-/home/aluno/Área de trabalho/netuno/build/CMakeFiles/rebuild_cache.dir
