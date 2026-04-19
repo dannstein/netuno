@@ -14,8 +14,6 @@ public:
 
     void reset(); 
     
-    // O seu 'sucessores_grid' do Python
-    // Retorna ponteiros para os Nodes vizinhos que não são parede
     std::vector<Node*> sucessors_grid(Node* current);
 
     void generateRandomMap(int wallProbability);

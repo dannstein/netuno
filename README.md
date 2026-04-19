@@ -34,10 +34,10 @@ These algorithms explore the map without prior knowledge of the goal's location:
 
 ### 2. Informed Search (Weighted/Heuristic)
 These algorithms use heuristics to guide the search towards the goal more efficiently:
-- [ ] **UCS (Uniform Cost Search)**: Optimal pathfinding for weighted edges.
-- [ ] **Greedy Best-First Search**: Uses heuristics for faster, but potentially non-optimal, results.
-- [ ] **A* (A-Star)**: The gold standard, combining UCS and Greedy search for optimal results.
-- [ ] **IDA* (Iterative Deepening A*)**: Memory-efficient version of the A* algorithm.
+- [x] **UCS (Uniform Cost Search)**: Optimal pathfinding for weighted edges.
+- [x] **Greedy Best-First Search**: Uses heuristics for faster, but potentially non-optimal, results.
+- [x] **A* (A-Star)**: The gold standard, combining UCS and Greedy search for optimal results.
+- [x] **IDA* (Iterative Deepening A*)**: Memory-efficient version of the A* algorithm.
 
 ---
 
@@ -52,11 +52,9 @@ Currently, the project runs in the terminal. However, a **2D Pixel-Art Graphical
 ## 🛠️ Project Structure
 ```text
 netuno/
-├── data/                 # Nothing (yet)
 ├── include/              # Header files (.hpp)
 │   ├── core/             # Graph and Node logic
 │   └── algorithms/       # AI Search classes
-├── misc/                 # Example files (initial algorithms given from the teacher)
 ├── src/                  # Source files (.cpp)
 │   ├── core/             # Implementation of the environment
 │   ├── algorithms/       # Algorithm logic
