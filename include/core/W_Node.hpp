@@ -16,12 +16,12 @@ namespace CellType {
 struct W_Node {
     W_Node* parent;
     int     state;
-    float   g;            // cost accumulated from start
-    float   h;            // heuristic to goal
+    float   g;           
+    float   h;           
     int     x, y;
     float   weight;  
     bool    visited;
-    W_Node* warp_target;  // non-null only for WORMHOLE cells (exit partner)
+    W_Node* warp_target;
 
     W_Node(int _x = 0, int _y = 0, int _state = 0, W_Node* _parent = nullptr)
         : x(_x), y(_y), state(_state), parent(_parent),
