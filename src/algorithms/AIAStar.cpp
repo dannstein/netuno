@@ -1,6 +1,6 @@
 #include <algorithms/AIAStar.hpp>
 #include <limits>
-#include <numeric>
+#include <algorithm>
 
 struct CompareF_AIA {
     bool operator()(const W_Node* a, const W_Node* b) const {
@@ -62,7 +62,6 @@ std::vector<W_Node*> AIAStar::findPathGrid(W_Graph& graph, int startX, int start
 
         if (novo_lim.empty()) return {};
 
-        float sum = std::accumulate(novo_lim.begin(), novo_lim.end(), 0.0f);
-        lim = static_cast<float>(static_cast<int>(sum / static_cast<float>(novo_lim.size())));
+        lim = *std::min_element(novo_lim.begin(), novo_lim.end());
     }
 }

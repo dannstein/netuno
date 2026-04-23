@@ -26,6 +26,9 @@ public:
     std::vector<W_Node*> showPath(W_Node* lastNode);
     void drawPath(const std::vector<W_Node*>& path);
 
+    // Game render: overlays path (X), base (S) and treasure (T) on the space map.
+    void drawGame(const std::vector<W_Node*>& path, int ox, int oy, int tx, int ty);
+
     float heuristic(W_Node* from, W_Node* goal) const;
 
 private:

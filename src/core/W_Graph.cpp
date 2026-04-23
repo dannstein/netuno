@@ -247,3 +247,33 @@ void W_Graph::drawPath(const std::vector<W_Node*>& path) {
         std::cout << "\n";
     }
 }
+
+void W_Graph::drawGame(const std::vector<W_Node*>& path, int ox, int oy, int tx, int ty) {
+    std::vector<std::vector<bool>> onPath(nx, std::vector<bool>(ny, false));
+    for (W_Node* n : path)
+        onPath[n->x][n->y] = true;
+
+    std::cout << "\n";
+    for (int j = 0; j < ny; j++) {
+        for (int i = 0; i < nx; i++) {
+            // S and T take priority over everything else
+            if      (i == ox && j == oy) { std::cout << " S "; continue; }
+            else if (i == tx && j == ty) { std::cout << " T "; continue; }
+            else if (onPath[i][j])       { std::cout << " X "; continue; }
+            switch (grid[i][j].state) {
+                case CellType::ASTEROID:      std::cout << " # "; break;
+                case CellType::BLACK_HOLE:    std::cout << "[O]"; break;
+                case CellType::BLACK_HOLE_R1: std::cout << "(o)"; break;
+                case CellType::BLACK_HOLE_R2: std::cout << " o "; break;
+                case CellType::WORMHOLE:      std::cout << "{W}"; break;
+                case CellType::NEBULA:        std::cout << ":::"; break;
+                case CellType::PULSAR_CENTER: std::cout << "[*]"; break;
+                case CellType::PULSAR_JET:    std::cout << " * "; break;
+                default:                      std::cout << " . "; break;
+            }
+        }
+        std::cout << "\n";
+    }
+    std::cout << " S=Base  T=Treasure  X=Path\n";
+    std::cout << " #=Asteroid  [O]=BlackHole  {W}=Wormhole  ::: =Nebula  [*]=Pulsar\n";
+}
