@@ -14,6 +14,7 @@ struct Node {
     float h;          // Heurística (distância até o destino)
     bool visited;    // Controle para não entrar em loop
 
+
     Node(int _x = 0, int _y = 0, int _state = 0, Node* _parent = nullptr) 
         : x(_x), y(_y), state(_state), parent(_parent) {
         

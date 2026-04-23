@@ -127,3 +127,25 @@ void Graph::drawPath(const std::vector<Node*>& path) {
         std::cout << "\n";
     }
 }
+
+void Graph::drawGame(const std::vector<Node*>& path, int ox, int oy, int tx, int ty) {
+    std::vector<std::vector<std::string>> display(nx, std::vector<std::string>(ny));
+    for (int i = 0; i < nx; i++)
+        for (int j = 0; j < ny; j++)
+            display[i][j] = (grid[i][j].state == 1) ? " # " : " . ";
+
+    for (Node* n : path)
+        display[n->x][n->y] = " X ";
+
+    // S and T take priority over path markers
+    display[ox][oy] = " S ";
+    display[tx][ty] = " T ";
+
+    std::cout << "\n";
+    for (int j = 0; j < ny; j++) {
+        for (int i = 0; i < nx; i++)
+            std::cout << display[i][j];
+        std::cout << "\n";
+    }
+    std::cout << " S=Base  T=Treasure  X=Path  #=Wall\n";
+}

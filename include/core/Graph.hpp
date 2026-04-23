@@ -23,6 +23,9 @@ public:
     std::vector<Node*> showPath(Node* lastNode);
 
     void drawPath(const std::vector<Node*>& path);
+
+    // Game render: overlays path (X), base (S) and treasure (T) on the map.
+    void drawGame(const std::vector<Node*>& path, int ox, int oy, int tx, int ty);
 };
 
 #endif
