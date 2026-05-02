@@ -1,9 +1,10 @@
 #include <algorithms/IDS.hpp>
 
-std::vector<Node*> IDS::findPathGrid(Graph& graph, int startX, int startY, int endX, int endY, int max_limit){
+std::vector<Node*> IDS::findPathGrid(Graph& graph, int startX, int startY, int endX, int endY, int max_limit,
+                                      std::vector<std::pair<int,int>>* log){
     for(int i = 1; i < max_limit; i++){
         graph.reset();
-        
+
         if(startX == endX && startY == endY) return{};
 
         std::stack<Node*> sc;
@@ -15,6 +16,7 @@ std::vector<Node*> IDS::findPathGrid(Graph& graph, int startX, int startY, int e
         while(!sc.empty()){
             Node* current = sc.top();
             sc.pop();
+            if(log) log->push_back({current->x, current->y});
 
             if(current->x == endX && current->y == endY){
                 return graph.showPath(current);

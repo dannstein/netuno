@@ -122,14 +122,11 @@ int main() {
     std::unique_ptr<GameState> gs;
     std::unique_ptr<Renderer>  renderer;
 
-    std::vector<std::pair<int,int>> lastPath;
     std::string statusMsg;
-    bool   paused        = false;
-    float  totalCost     = 0.f;
-    float  returnCost    = 0.f;
-    int    lastStep      = 0;
+    bool   paused          = false;
+    bool   pathAnimStarted = false;
     sf::Clock stepClock;
-    const int STEP_MS    = 600;
+    const int STEP_MS      = 40;
 
     // ── Event / draw loop ────────────────────────────────────────────────────
     bool suppressNextText = false; // blocks TextEntered caused by a menu keypress
@@ -262,33 +259,24 @@ int main() {
                         appState = AppState::RESULT;
                     }
                     if (key == sf::Keyboard::Right && gs &&
-                        gs->phase() != GamePhase::DONE &&
-                        gs->phase() != GamePhase::NO_PATH) {
-                        auto res  = gs->advance();
-                        lastPath  = res.path;
-                        lastStep  = res.stepNum;
-                        totalCost = res.totalCost;
-                        if (res.isReturnPath) returnCost = res.stepCost;
-                        if (renderer && !res.path.empty() && !res.noPathToTarget) {
-                            int dur = res.isReturnPath ? 2500 : STEP_MS;
-                            renderer->startPathAnimation(res.path, dur, res.isReturnPath);
+                        gs->phase() == GamePhase::EXPLORING) {
+                        auto res = gs->advance();
+                        if (res.phase == GamePhase::DONE && !pathAnimStarted) {
+                            pathAnimStarted = true;
+                            renderer->startPathAnimation(gs->finalPath(), 3000, false);
+                            statusMsg = "Treasure found! Press ENTER";
+                        } else if (res.phase == GamePhase::NO_PATH && !pathAnimStarted) {
+                            pathAnimStarted = true;
+                            statusMsg = "No path found. Press ENTER";
+                        } else {
+                            statusMsg = "Exploring... (" + std::to_string(res.revealIdx)
+                                      + " / " + std::to_string(gs->logSize()) + ")";
                         }
-                        if (res.noPathToTarget)
-                            statusMsg = "No path to target. Skipping...";
-                        else if (res.isReturnPath)
-                            statusMsg = "Return path: " + std::to_string(res.path.size()) + " nodes";
-                        else if (res.treasureOnRoute)
-                            statusMsg = "Treasure found en route! Step " + std::to_string(res.stepNum);
-                        else if (res.phase == GamePhase::TREASURE_FOUND)
-                            statusMsg = "Treasure reached! Step " + std::to_string(res.stepNum);
-                        else
-                            statusMsg = "Step " + std::to_string(res.stepNum)
-                                      + ": " + std::to_string(res.path.size()) + " nodes";
                         stepClock.restart();
                     }
                     if (key == sf::Keyboard::Escape) {
                         appState = AppState::MAIN_MENU;
-                        gs.reset(); renderer.reset(); lastPath.clear();
+                        gs.reset(); renderer.reset();
                     }
                 } else if (appState == AppState::RESULT) {
                     if (key == sf::Keyboard::Return || key == sf::Keyboard::Space)
@@ -318,12 +306,9 @@ int main() {
             // ── goto target: launch game ─────────────────────────────────────
             if (false) {
                 launch_game:
-                lastPath.clear();
                 statusMsg.clear();
-                totalCost  = 0.f;
-                returnCost = 0.f;
-                lastStep   = 0;
-                paused     = false;
+                paused          = false;
+                pathAnimStarted = false;
 
                 gs = std::make_unique<GameState>(
                     gridSize, wallProb, graphMode, algo, dlsLimit, idsMaxLim, fuelSteps);
@@ -337,31 +322,20 @@ int main() {
 
         // ── Auto-advance ─────────────────────────────────────────────────────
         if (appState == AppState::PLAYING && !paused && gs &&
-            gs->phase() != GamePhase::DONE &&
-            gs->phase() != GamePhase::NO_PATH) {
+            gs->phase() == GamePhase::EXPLORING) {
             if (stepClock.getElapsedTime().asMilliseconds() >= STEP_MS) {
                 auto res = gs->advance();
-                lastPath  = res.path;
-                lastStep  = res.stepNum;
-                totalCost = res.totalCost;
-                if (res.isReturnPath) returnCost = res.stepCost;
-                if (renderer && !res.path.empty() && !res.noPathToTarget) {
-                    int dur = res.isReturnPath ? 2500 : STEP_MS;
-                    renderer->startPathAnimation(res.path, dur, res.isReturnPath);
+                if (res.phase == GamePhase::DONE && !pathAnimStarted) {
+                    pathAnimStarted = true;
+                    renderer->startPathAnimation(gs->finalPath(), 3000, false);
+                    statusMsg = "Treasure found! Press ENTER";
+                } else if (res.phase == GamePhase::NO_PATH && !pathAnimStarted) {
+                    pathAnimStarted = true;
+                    statusMsg = "No path found. Press ENTER";
+                } else if (res.phase == GamePhase::EXPLORING) {
+                    statusMsg = "Exploring... (" + std::to_string(res.revealIdx)
+                              + " / " + std::to_string(gs->logSize()) + ")";
                 }
-                if (res.noPathToTarget)
-                    statusMsg = "No path to target. Skipping...";
-                else if (res.isReturnPath)
-                    statusMsg = "Return path: " + std::to_string(res.path.size()) + " nodes";
-                else if (res.treasureOnRoute)
-                    statusMsg = "Treasure found en route! Step " + std::to_string(res.stepNum);
-                else if (res.phase == GamePhase::TREASURE_FOUND)
-                    statusMsg = "Treasure reached! Step " + std::to_string(res.stepNum);
-                else if (res.phase == GamePhase::DONE || res.phase == GamePhase::NO_PATH)
-                    statusMsg = "Press ENTER to see results";
-                else
-                    statusMsg = "Step " + std::to_string(res.stepNum)
-                              + ": " + std::to_string(res.path.size()) + " nodes";
                 stepClock.restart();
             }
         }
@@ -570,37 +544,32 @@ int main() {
                 }
             }
         } else if (appState == AppState::PLAYING && gs && renderer) {
-            renderer->render(*gs, lastPath, paused, totalCost, statusMsg);
+            renderer->render(*gs, paused, statusMsg);
         } else if (appState == AppState::RESULT) {
             if (fontOk) {
-                std::string title = (gs && gs->phase() == GamePhase::DONE)
-                    ? "Mission Complete!" : "Treasure Not Found";
-                drawCenteredText(win, font, title, 40, 220.f,
+                bool done = gs && gs->phase() == GamePhase::DONE;
+                std::string title = done ? "Mission Complete!" : "No Path Found";
+                drawCenteredText(win, font, title, 40, 180.f,
                                  sf::Color(255, 220, 80));
-                float ry = 300.f;
-                if (gs && gs->isWeighted()) {
-                    float explCost = totalCost - returnCost;
-                    if (explCost > 0.f) {
+                float ry = 260.f;
+                if (gs) {
+                    drawCenteredText(win, font,
+                        "Cells explored: " + std::to_string(gs->logSize()), 22, ry);
+                    ry += 36.f;
+                    if (done) {
                         drawCenteredText(win, font,
-                            "Exploration cost: " + std::to_string((int)explCost), 22, ry);
+                            "Path length: " + std::to_string(gs->pathHops()) + " hops",
+                            22, ry, sf::Color(100, 255, 160));
                         ry += 36.f;
-                    }
-                    if (returnCost > 0.f) {
-                        drawCenteredText(win, font,
-                            "Return path cost: " + std::to_string((int)returnCost), 22, ry,
-                            sf::Color(255, 200, 80));
-                        ry += 36.f;
-                    }
-                    if (totalCost > 0.f) {
-                        drawCenteredText(win, font,
-                            "Total cost: " + std::to_string((int)totalCost), 24, ry,
-                            sf::Color(200, 255, 200));
-                        ry += 40.f;
+                        if (gs->isWeighted() && gs->pathCost() > 0.f) {
+                            drawCenteredText(win, font,
+                                "Total cost: " + std::to_string((int)gs->pathCost()),
+                                24, ry, sf::Color(255, 200, 80));
+                            ry += 40.f;
+                        }
                     }
                 }
-                drawCenteredText(win, font,
-                    "Steps: " + std::to_string(lastStep), 22, ry);
-                ry += 60.f;
+                ry += 20.f;
                 drawCenteredText(win, font,
                     "[ENTER] Main Menu   [ESC] Quit", 20, ry,
                     sf::Color(140, 140, 160));

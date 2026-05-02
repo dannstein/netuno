@@ -24,9 +24,7 @@ public:
 
     // Main render call.
     void render(const GameState& gs,
-                const std::vector<std::pair<int,int>>& activePath,
                 bool paused,
-                float totalCost,
                 const std::string& statusMsg);
 
     // Input handlers
@@ -88,10 +86,9 @@ private:
 
     sf::Texture& tileTexture(const GameState& gs, int x, int y);
 
-    void drawGrid(const GameState& gs,
-                  const std::vector<std::pair<int,int>>& activePath);
+    void drawGrid(const GameState& gs);
     void drawHUD (const GameState& gs,
-                  bool paused, float totalCost,
+                  bool paused,
                   const std::string& statusMsg);
 
     // Draw a scaled sprite at world tile position (x,y) with optional rotation.

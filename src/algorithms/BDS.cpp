@@ -27,7 +27,8 @@ std::vector<Node*> buildPath(NodeMap& v1, NodeMap& v2, Node* n1, Node* n2) {
     return path;
 }
 
-std::vector<Node*> BDS::findPathGrid(Graph& graph, int startX, int startY, int endX, int endY){
+std::vector<Node*> BDS::findPathGrid(Graph& graph, int startX, int startY, int endX, int endY,
+                                      std::vector<std::pair<int,int>>* log){
     if(startX == endX && startY == endY) return{};
 
     std::unordered_map<std::pair<int, int>, Node*, pair_hash> visited1;
@@ -48,6 +49,7 @@ std::vector<Node*> BDS::findPathGrid(Graph& graph, int startX, int startY, int e
         while(size1--) {
             Node* current = dq1.front();
             dq1.pop_front();
+            if(log) log->push_back({current->x, current->y});
 
             for (Node* neighbor : graph.sucessors_grid(current)) {
                 std::pair<int, int> pos = {neighbor->x, neighbor->y};
@@ -66,6 +68,7 @@ std::vector<Node*> BDS::findPathGrid(Graph& graph, int startX, int startY, int e
         while(size2--) {
             Node* current = dq2.front();
             dq2.pop_front();
+            if(log) log->push_back({current->x, current->y});
 
             for (Node* neighbor : graph.sucessors_grid(current)) {
                 std::pair<int, int> pos = {neighbor->x, neighbor->y};

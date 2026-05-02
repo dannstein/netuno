@@ -7,7 +7,8 @@ struct CompareF {
     }
 };
 
-std::vector<W_Node*> AStar::findPathGrid(W_Graph& graph, int startX, int startY, int endX, int endY) {
+std::vector<W_Node*> AStar::findPathGrid(W_Graph& graph, int startX, int startY, int endX, int endY,
+                                          std::vector<std::pair<int,int>>* log) {
     if (startX == endX && startY == endY) return {};
 
     graph.reset();
@@ -31,6 +32,7 @@ std::vector<W_Node*> AStar::findPathGrid(W_Graph& graph, int startX, int startY,
 
         if (current->visited) continue;
         current->visited = true;
+        if (log) log->push_back({current->x, current->y});
 
         if (current == goal)
             return graph.showPath(current);
