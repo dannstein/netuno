@@ -221,58 +221,93 @@ void Renderer::drawTileSprite(sf::Sprite& spr, sf::Texture& tex,
 
 // ─── drawGrid ────────────────────────────────────────────────────────────────
 
-void Renderer::drawGrid(const GameState& gs,
-                        const std::vector<std::pair<int,int>>& activePath) {
+void Renderer::drawGrid(const GameState& gs) {
     int n = gs.gridSize();
-    std::set<std::pair<int,int>> pathSet(activePath.begin(), activePath.end());
-
     auto [ox, oy] = gs.origin();
     auto [tx, ty] = gs.treasure();
 
-    sf::Sprite spr;
-    sf::RectangleShape pathOverlay(sf::Vector2f(TILE, TILE));
-    pathOverlay.setFillColor(sf::Color(100, 200, 255, 130));
+    // Build revealed-cell lookup: value = index of last expansion in log
+    const auto& log = gs.expansionLog();
+    int ri = gs.revealIdx();
+    std::vector<int> lastSeen(n * n, -1);
+    for (int i = 0; i < ri; i++) {
+        auto& [lx, ly] = log[i];
+        lastSeen[lx * n + ly] = i;
+    }
 
-    // ── Terrain layer ─────────────────────────────────────────────────────────
+    sf::Sprite spr;
+
+    // ── 1. Terrain layer ──────────────────────────────────────────────────────
+    for (int y = 0; y < n; y++)
+        for (int x = 0; x < n; x++)
+            drawTileSprite(spr, tileTexture(gs, x, y), x * (float)TILE, y * (float)TILE);
+
+    // ── 2. Gradient visited tint (recent = bright cyan → old = dim blue) ─────
+    sf::RectangleShape tintRect(sf::Vector2f(TILE, TILE));
     for (int y = 0; y < n; y++) {
         for (int x = 0; x < n; x++) {
-            float px = x * (float)TILE;
-            float py = y * (float)TILE;
-            drawTileSprite(spr, tileTexture(gs, x, y), px, py);
+            int idx = lastSeen[x * n + y];
+            if (idx < 0) continue;
+            int age = ri - idx;
+            sf::Color col;
+            if      (age <= std::max(1, ri / 8)) col = sf::Color(80,  200, 255, 160);
+            else if (age <= std::max(2, ri / 3)) col = sf::Color(40,  100, 200, 100);
+            else                                 col = sf::Color(20,   50, 120,  60);
+            tintRect.setFillColor(col);
+            tintRect.setPosition(x * (float)TILE, y * (float)TILE);
+            win_.draw(tintRect);
         }
     }
 
-    // ── Path overlay — blue for exploration, gold for return path ────────────
-    sf::Color overlayCol = isReturnPath_
-        ? sf::Color(255, 200,  50, 160)   // gold
-        : sf::Color(100, 200, 255, 130);  // blue
-    pathOverlay.setFillColor(overlayCol);
-    for (auto& [px, py] : pathSet) {
-        pathOverlay.setPosition(px * (float)TILE, py * (float)TILE);
-        win_.draw(pathOverlay);
+    // ── 3. Gold final-path overlay when exploration is complete ───────────────
+    if (gs.phase() == GamePhase::DONE) {
+        sf::RectangleShape goldRect(sf::Vector2f(TILE, TILE));
+        goldRect.setFillColor(sf::Color(255, 200, 50, 180));
+        for (auto& [px, py] : gs.finalPath()) {
+            goldRect.setPosition(px * (float)TILE, py * (float)TILE);
+            win_.draw(goldRect);
+        }
     }
 
-    // ── Base (S) and Treasure (T) — drawn on top of terrain & path ───────────
-    drawTileSprite(spr, baseTex_,     ox * (float)TILE, oy * (float)TILE);
-    drawTileSprite(spr, treasureTex_, tx * (float)TILE, ty * (float)TILE);
+    // ── 4. Fog overlay on unrevealed cells ────────────────────────────────────
+    sf::RectangleShape fogRect(sf::Vector2f(TILE, TILE));
+    fogRect.setFillColor(sf::Color(0, 0, 10, 220));
+    for (int y = 0; y < n; y++) {
+        for (int x = 0; x < n; x++) {
+            if (x == ox && y == oy) continue; // base always visible
+            if (lastSeen[x * n + y] < 0) {
+                fogRect.setPosition(x * (float)TILE, y * (float)TILE);
+                win_.draw(fogRect);
+            }
+        }
+    }
 
-    // ── Ship — traverse waypoints, rotate to face current segment ─────────────
+    // ── 5. Base (always visible) ──────────────────────────────────────────────
+    drawTileSprite(spr, baseTex_, ox * (float)TILE, oy * (float)TILE);
+
+    // ── 6. Treasure — visible once its cell is revealed, or after game ends ───
+    bool treasureRevealed = lastSeen[tx * n + ty] >= 0
+                         || gs.phase() == GamePhase::DONE
+                         || gs.phase() == GamePhase::NO_PATH;
+    if (treasureRevealed)
+        drawTileSprite(spr, treasureTex_, tx * (float)TILE, ty * (float)TILE);
+
+    // ── 7. Ship — sits at base during exploration, animates final path on DONE ─
     sf::Vector2f shipWorld;
-    if (shipWaypoints_.empty()) {
-        shipWorld = {0.f, 0.f};
-    } else if (shipWaypoints_.size() == 1 || shipSegDur_ <= 0.f) {
+    if (shipWaypoints_.empty() || (shipWaypoints_.size() == 1 && shipSegDur_ <= 0.f)) {
+        shipWorld = {ox * (float)TILE, oy * (float)TILE};
+    } else if (shipWaypoints_.size() == 1) {
         shipWorld = shipWaypoints_.back();
     } else {
         float elapsed  = shipClock_.getElapsedTime().asSeconds();
         int   totalSeg = (int)shipWaypoints_.size() - 1;
         float totalDur = shipSegDur_ * totalSeg;
-        float tf = std::clamp(elapsed / totalDur, 0.f, 1.f);
+        float tf  = std::clamp(elapsed / totalDur, 0.f, 1.f);
         float segF = tf * totalSeg;
         int   seg  = std::min((int)segF, totalSeg - 1);
         float segT = segF - seg;
-        segT = segT * segT * (3.f - 2.f * segT); // smoothstep per segment
+        segT = segT * segT * (3.f - 2.f * segT);
         shipWorld = shipWaypoints_[seg] + segT * (shipWaypoints_[seg + 1] - shipWaypoints_[seg]);
-        // Rotate toward current segment
         sf::Vector2f dir = shipWaypoints_[seg + 1] - shipWaypoints_[seg];
         if (dir.x != 0.f || dir.y != 0.f)
             shipRotation_ = std::atan2(dir.y, dir.x) * 180.f / PI + 90.f;
@@ -282,7 +317,7 @@ void Renderer::drawGrid(const GameState& gs,
 
 // ─── drawHUD ─────────────────────────────────────────────────────────────────
 
-void Renderer::drawHUD(const GameState& gs, bool paused, float totalCost,
+void Renderer::drawHUD(const GameState& gs, bool paused,
                        const std::string& statusMsg) {
     float winW = static_cast<float>(win_.getSize().x);
     float winH = static_cast<float>(win_.getSize().y);
@@ -340,8 +375,17 @@ void Renderer::drawHUD(const GameState& gs, bool paused, float totalCost,
     txt("Ship:     (" + std::to_string(sx) + "," + std::to_string(sy) + ")");
     row += 6.f;
 
-    if (gs.isWeighted() && totalCost > 0.f)
-        txt("Total cost: " + std::to_string(static_cast<int>(totalCost)));
+    if (gs.phase() == GamePhase::EXPLORING) {
+        int ri = gs.revealIdx(), ls = gs.logSize();
+        txt("Exploring: " + std::to_string(ri) + " / " + std::to_string(ls),
+            sf::Color(120, 200, 255));
+    } else if (gs.phase() == GamePhase::DONE) {
+        txt("Path: " + std::to_string(gs.pathHops()) + " hops",
+            sf::Color(100, 255, 160));
+        if (gs.isWeighted() && gs.pathCost() > 0.f)
+            txt("Cost: " + std::to_string(static_cast<int>(gs.pathCost())),
+                sf::Color(255, 200, 80));
+    }
 
     int fuelRem = gs.fuelRemaining();
     if (fuelRem >= 0) {
@@ -356,10 +400,9 @@ void Renderer::drawHUD(const GameState& gs, bool paused, float totalCost,
 
     std::string phaseStr;
     switch (gs.phase()) {
-        case GamePhase::EXPLORING:      phaseStr="Exploring...";    break;
-        case GamePhase::TREASURE_FOUND: phaseStr="Treasure found!"; break;
-        case GamePhase::DONE:           phaseStr="Mission done!";   break;
-        case GamePhase::NO_PATH:        phaseStr="No path found.";  break;
+        case GamePhase::EXPLORING: phaseStr="Exploring...";   break;
+        case GamePhase::DONE:      phaseStr="Mission done!";  break;
+        case GamePhase::NO_PATH:   phaseStr="No path found."; break;
     }
     txt(phaseStr, sf::Color(255,220,80));
     row += 6.f;
@@ -403,14 +446,13 @@ void Renderer::drawHUD(const GameState& gs, bool paused, float totalCost,
 // ─── render ──────────────────────────────────────────────────────────────────
 
 void Renderer::render(const GameState& gs,
-                      const std::vector<std::pair<int,int>>& activePath,
-                      bool paused, float totalCost,
+                      bool paused,
                       const std::string& statusMsg) {
     win_.clear(sf::Color(5, 5, 15));
     win_.setView(gridView_);
-    drawGrid(gs, activePath);
+    drawGrid(gs);
     win_.setView(win_.getDefaultView());
-    drawHUD(gs, paused, totalCost, statusMsg);
+    drawHUD(gs, paused, statusMsg);
 }
 
 // ─── Zoom / pan ──────────────────────────────────────────────────────────────

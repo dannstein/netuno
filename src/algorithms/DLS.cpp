@@ -1,6 +1,7 @@
 #include <algorithms/DLS.hpp>
 
-std::vector<Node*> DLS::findPathGrid(Graph& graph, int startX, int startY, int endX, int endY, int limit){
+std::vector<Node*> DLS::findPathGrid(Graph& graph, int startX, int startY, int endX, int endY, int limit,
+                                      std::vector<std::pair<int,int>>* log){
     if(startX == endX && startY == endY) return{};
 
     std::stack<Node*> sc;
@@ -12,6 +13,7 @@ std::vector<Node*> DLS::findPathGrid(Graph& graph, int startX, int startY, int e
     while(!sc.empty()){
         Node* current = sc.top();
         sc.pop();
+        if(log) log->push_back({current->x, current->y});
 
         if(current->x == endX && current->y == endY){
             return graph.showPath(current);

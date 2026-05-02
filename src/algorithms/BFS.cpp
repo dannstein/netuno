@@ -1,6 +1,7 @@
 #include <algorithms/BFS.hpp>
 
-std::vector<Node*> BFS::findPathGrid(Graph& graph, int startX, int startY, int endX, int endY){
+std::vector<Node*> BFS::findPathGrid(Graph& graph, int startX, int startY, int endX, int endY,
+                                      std::vector<std::pair<int,int>>* log){
     if(startX == endX && startY == endY) return{};
 
     std::deque<Node*> dq;
@@ -12,6 +13,7 @@ std::vector<Node*> BFS::findPathGrid(Graph& graph, int startX, int startY, int e
     while(!dq.empty()){
         Node* current = dq.front();
         dq.pop_front();
+        if(log) log->push_back({current->x, current->y});
 
         std::vector<Node*> children = graph.sucessors_grid(current);
 
