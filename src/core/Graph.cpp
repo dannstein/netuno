@@ -4,11 +4,10 @@
 #include <ctime>
 
 Graph::Graph(int x, int y) : nx(x), ny(y) {
-    // Inicializa a matriz com Nodes vazios
     grid.resize(nx, std::vector<Node>(ny));
     for(int i = 0; i < nx; i++) {
         for(int j = 0; j < ny; j++) {
-            grid[i][j] = Node(i, j); // Configura x e y de cada nó
+            grid[i][j] = Node(i, j);
         }
     }
 }
@@ -23,10 +22,8 @@ std::vector<Node*> Graph::sucessors_grid(Node* current) {
         int nextX = current->x + dx[i];
         int nextY = current->y + dy[i];
 
-        // Usa o nx e ny da própria classe Graph
         if (nextX >= 0 && nextX < nx && nextY >= 0 && nextY < ny) {
             
-            // Verifica o 'state' dentro do Node na grid
             if (grid[nextX][nextY].state == 0) { 
                 children.push_back(&grid[nextX][nextY]);
             }
@@ -41,13 +38,11 @@ void Graph::reset() {
             node.parent = nullptr;
             node.visited = false;
             node.v1 = 0; // custo g
-            // ... resetar outros custos se houver
         }
     }
 }
 
 void Graph::generateRandomMap(int wallProbability) {
-    // Gerador de números aleatórios moderno
     std::mt19937 generator(time(0)); 
     std::uniform_int_distribution<int> dist(0, 100);
 
@@ -56,13 +51,10 @@ void Graph::generateRandomMap(int wallProbability) {
             int chance = dist(generator);
             
             if (chance < wallProbability) {
-                grid[i][j].state = 1; // Parede/Bloqueado
+                grid[i][j].state = 1;
             } else {
-                grid[i][j].state = 0; // Caminho livre
+                grid[i][j].state = 0;
             }
-            
-            // Futuro: você pode adicionar mais condições aqui
-            // else if (chance < 40) grid[i][j].state = 2; // Ex: Lama (custo alto)
         }
     }
 }
@@ -75,14 +67,14 @@ void Graph::drawConsole() {
             int state = grid[i][j].state;
             
             if (state == 1) {
-                std::cout << " # "; // Parede / Bloqueado
+                std::cout << " # ";
             } else if (state == 0) {
-                std::cout << " . "; // Caminho Livre
+                std::cout << " . ";
             } else {
-                std::cout << " " << state << " "; // Outros states futuros
+                std::cout << " " << state << " "; 
             }
         }
-        std::cout << "\n"; // Quebra de linha ao fim de cada linha do grid
+        std::cout << "\n"; 
     }
     std::cout << "---------------------------\n";
 }
@@ -91,30 +83,25 @@ std::vector<Node*> Graph::showPath(Node* lastNode){
         std::vector<Node*> path;
         Node* current = lastNode;
 
-        // Enquanto o nó não for nulo (chegou na raiz/início)
         while (current != nullptr) {
-            path.push_back(current); // Adiciona o nó atual à lista
-            current = current->parent;       // Sobe para o pai (igual ao Python)
+            path.push_back(current);
+            current = current->parent;
         }
 
-        // Inverte o vetor para ir do Início -> Fim
         std::reverse(path.begin(), path.end());
         
         return path;
 }
 
 void Graph::drawPath(const std::vector<Node*>& path) {
-    // Cria uma cópia visual do grid para não estragar o 'state' original
     std::vector<std::vector<char>> display(nx, std::vector<char>(ny, '.'));
 
-    // Preenche as paredes e o caminho
     for (int i = 0; i < nx; i++) {
         for (int j = 0; j < ny; j++) {
             if (grid[i][j].state == 1) display[i][j] = '#';
         }
     }
 
-    // Marca o caminho com 'X'
     for (Node* n : path) {
         display[n->x][n->y] = 'X';
     }
@@ -137,7 +124,6 @@ void Graph::drawGame(const std::vector<Node*>& path, int ox, int oy, int tx, int
     for (Node* n : path)
         display[n->x][n->y] = " X ";
 
-    // S and T take priority over path markers
     display[ox][oy] = " S ";
     display[tx][ty] = " T ";
 
